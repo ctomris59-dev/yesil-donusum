@@ -16,6 +16,7 @@ import {
   computeScores,
   relevantFinanceNotes,
   totalQuestionCount,
+  actionableFindings,
 } from "./lib/scoring";
 import { generateGreenPdfReport } from "./lib/pdfReport";
 
@@ -31,28 +32,18 @@ function scoreColor(score) {
   return { bar: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-800 border-emerald-200", text: "text-emerald-700" };
 }
 
-function categoryGuidance(catLabel, score) {
-  if (score < 40) {
-    return `${catLabel} alanında henüz sistematik bir uygulama görünmüyor. İlk adım: mevcut durumu ölçüp kayıt altına almak.`;
-  }
-  if (score < 60) {
-    return `${catLabel} alanında bazı temel adımlar atılmış. Bir sonraki adım: bu uygulamaları belgelendirmek ve düzenli hale getirmek.`;
-  }
-  if (score < 80) {
-    return `${catLabel} alanında sistematik uygulamalar mevcut. Öncelik: sektörel sertifikasyon veya hibe fırsatlarını değerlendirmek.`;
-  }
-  return `${catLabel} alanında güçlü bir performans var. Öncelik: bu performansı raporlama/sertifikasyon ile görünür kılmak.`;
-}
-
 /* ---------------------------------------------------------------
-   BASİT ÇUBUK GRAFİK (kategori skorları)
+   KATEGORİ SKORU + SOMUT AKSİYON BULGULARI
 --------------------------------------------------------------- */
-function CategoryBars({ sector, categoryScores }) {
+function CategoryBars({ sector, categoryScores, answers }) {
+  const findingsByCategory = actionableFindings(sector, answers);
+
   return (
     <div className="grid gap-3">
-      {sector.categories.map((cat) => {
+      {sector.categories.map((cat, idx) => {
         const s = categoryScores[cat.code] ?? 0;
         const c = scoreColor(s);
+        const findings = findingsByCategory[idx]?.findings || [];
         return (
           <div key={cat.code} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -61,10 +52,40 @@ function CategoryBars({ sector, categoryScores }) {
                 {s} / 100
               </span>
             </div>
-            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-3">
               <div className={`h-full ${c.bar} rounded-full transition-all duration-500`} style={{ width: `${s}%` }} />
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed">{categoryGuidance(cat.label, s)}</p>
+
+            {findings.length > 0 ? (
+              <div className="space-y-2.5">
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Öncelikli Aksiyon Alanları
+                </div>
+                {findings.map((q) => (
+                  <div key={q.id} className="bg-slate-50 border border-slate-100 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <span
+                        className={`mt-0.5 flex-shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                          q.answerValue === 0
+                            ? "bg-red-100 text-red-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {q.answerValue === 0 ? "Hayır" : "Kısmen"}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-700 leading-snug">{q.text}</span>
+                    </div>
+                    <p className="text-xs text-emerald-800 leading-relaxed mt-1.5 pl-2 border-l-2 border-emerald-300">
+                      → {q.recommendation}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-emerald-700 font-medium">
+                Bu kategoride öncelikli bir eksik görünmüyor — mevcut uygulamalarınızı sürdürün.
+              </p>
+            )}
           </div>
         );
       })}
@@ -191,6 +212,7 @@ export default function App() {
         crossSectorPrograms: CROSS_SECTOR_PROGRAMS,
         triggeredModules,
         conditionalModules: CONDITIONAL_MODULES,
+        findingsByCategory: actionableFindings(sector, answers),
       });
       setPdfState("done");
     } catch (e) {
@@ -341,7 +363,7 @@ export default function App() {
 
             <div className="space-y-3">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Kategori Bazlı Sonuçlar</h3>
-              <CategoryBars sector={sector} categoryScores={categoryScores} />
+              <CategoryBars sector={sector} categoryScores={categoryScores} answers={answers} />
             </div>
 
             {triggeredModules.includes("ets_skdm_module") && CONDITIONAL_MODULES.ets_skdm_module && (
