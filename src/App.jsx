@@ -20,6 +20,7 @@ import {
   actionableFindings,
 } from "./lib/scoring";
 import { generateGreenPdfReport } from "./lib/pdfReport";
+import EcoBackground from "./components/EcoBackground";
 
 const HIBE_MOTORU_URL = "https://hibemotoru.vercel.app";
 
@@ -324,18 +325,22 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-200 py-4 flex-shrink-0">
+    <div className="min-h-screen flex flex-col relative">
+      <EcoBackground />
+
+      <header className="bg-slate-950/35 backdrop-blur-md border-b border-white/10 py-4 flex-shrink-0 relative z-10">
         <div className="max-w-4xl mx-auto px-4 flex items-center gap-3">
-          <img src="/ctso-logo.png" alt="Çorlu TSO" className="h-9 w-auto" />
+          <div className="bg-white/95 rounded-lg p-1 flex-shrink-0">
+            <img src="/ctso-logo.png" alt="Çorlu TSO" className="h-8 w-auto" />
+          </div>
           <div>
-            <div className="text-sm font-extrabold text-slate-900 leading-tight">Çorlu Ticaret ve Sanayi Odası</div>
-            <div className="text-xs text-slate-500 leading-tight">Bütüncül Yeşil Dönüşüm & Sürdürülebilirlik Karnesi</div>
+            <div className="text-sm font-extrabold text-white leading-tight">Çorlu Ticaret ve Sanayi Odası</div>
+            <div className="text-xs text-emerald-200/80 leading-tight">Bütüncül Yeşil Dönüşüm & Sürdürülebilirlik Karnesi</div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 relative z-10">
         {screen === "intro" && (
           <div className="space-y-6">
             <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm text-center space-y-4">
@@ -360,7 +365,7 @@ export default function App() {
               </button>
             </div>
 
-            <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-6 space-y-3">
+            <div className="bg-white/95 backdrop-blur-sm border border-emerald-200/80 rounded-xl p-6 space-y-3 shadow-lg">
               <div className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
                 BİLİMSEL METODOLOJİ VE KAYNAKÇA
               </div>
@@ -383,7 +388,7 @@ export default function App() {
         )}
 
         {screen === "sectorPick" && (
-          <div className="space-y-4">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/40 p-5 sm:p-8 space-y-4">
             <div className="text-center space-y-1 mb-2">
               <h2 className="text-lg font-extrabold text-slate-900">Sektörünüzü Seçin</h2>
               <p className="text-xs text-slate-500">Sorular sektörünüze göre özelleştirilecek.</p>
@@ -407,7 +412,7 @@ export default function App() {
         )}
 
         {screen === "questions" && sector && currentCategory && (
-          <div className="space-y-5">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/40 p-5 sm:p-8 space-y-5">
             <div>
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1.5">
                 <span>{sector.label}</span>
@@ -470,7 +475,7 @@ export default function App() {
         )}
 
         {screen === "results" && sector && (
-          <div className="space-y-6">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/40 p-5 sm:p-8 space-y-6">
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm text-center space-y-3">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{sector.label}</div>
               <Gauge value={overallScore} />
@@ -591,10 +596,10 @@ export default function App() {
       </main>
 
       {screen !== "intro" && (
-        <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 flex-shrink-0">
+        <footer className="border-t border-white/10 bg-slate-950/35 backdrop-blur-md py-6 text-center text-xs flex-shrink-0 relative z-10">
           <div className="max-w-4xl mx-auto px-4">
-            <p className="font-semibold text-slate-700">Çorlu Ticaret ve Sanayi Odası © {new Date().getFullYear()}</p>
-            <p className="mt-1 text-[11px] text-slate-400">Yeşil Dönüşüm & Sürdürülebilirlik Hizmetleri</p>
+            <p className="font-semibold text-white/90">Çorlu Ticaret ve Sanayi Odası © {new Date().getFullYear()}</p>
+            <p className="mt-1 text-[11px] text-emerald-200/60">Yeşil Dönüşüm & Sürdürülebilirlik Hizmetleri</p>
           </div>
         </footer>
       )}

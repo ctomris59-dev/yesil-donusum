@@ -9,3 +9,26 @@ html, body, #root {
 body {
   -webkit-font-smoothing: antialiased;
 }
+
+@keyframes ecoPulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+@keyframes ecoPulseSlow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.05); }
+}
+@keyframes ecoTwinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.8; }
+}
+
+.eco-pulse { animation: ecoPulse 7s ease-in-out infinite; }
+.eco-pulse-slow { animation: ecoPulseSlow 11s ease-in-out infinite; }
+.eco-twinkle { animation: ecoTwinkle 3.5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eco-pulse, .eco-pulse-slow, .eco-twinkle {
+    animation: none !important;
+  }
+}
