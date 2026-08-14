@@ -8,6 +8,7 @@ import {
   Leaf,
   ShieldCheck,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { SECTORS, CROSS_SECTOR_PROGRAMS, CONDITIONAL_MODULES } from "./lib/sectors";
 import {
@@ -129,6 +130,106 @@ function Gauge({ value }) {
 }
 
 /* ---------------------------------------------------------------
+   METODOLOJİ MODALI
+--------------------------------------------------------------- */
+function MethodologyModal({ onClose }) {
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 z-50 bg-slate-900/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white border border-slate-200 rounded-xl shadow-2xl p-6 sm:p-8 max-w-2xl w-full"
+        style={{ maxHeight: "85vh", overflowY: "auto" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <h3 className="text-base font-extrabold text-slate-900">Bilimsel Metodoloji ve Kaynakça</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 flex-shrink-0">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="space-y-5 text-sm text-slate-700 leading-relaxed">
+          <p>
+            Bu karne; çevresel-sosyal-yönetişim (ESG) raporlamasında uluslararası kabul gören{" "}
+            <strong>GRI (Global Reporting Initiative) Standartları</strong>'nın kategori yapısından,
+            BM <strong>Sürdürülebilir Kalkınma Amaçları</strong>'ndan (özellikle SKA 6 — Temiz Su,
+            SKA 7 — Erişilebilir Enerji, SKA 8 — İnsana Yakışır İş, SKA 12 — Sorumlu Üretim-Tüketim,
+            SKA 13 — İklim Eylemi) ve <strong>AB Döngüsel Ekonomi Eylem Planı</strong>'ndan esinlenerek
+            Çorlu Ticaret ve Sanayi Odası tarafından özgün olarak geliştirilmiştir.
+          </p>
+
+          <div>
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              1. Kategori Çerçevesi
+            </div>
+            <p>
+              Her sektör dört ortak eksende değerlendirilir: <strong>Enerji Yönetimi</strong>,{" "}
+              <strong>Su & Kimyasal Yönetimi</strong>, <strong>Döngüsel Ekonomi</strong> ve{" "}
+              <strong>Sosyal & Yönetişim (ESG)</strong>. Bu dörtlü yapı, GRI 300 (Çevresel) ve
+              GRI 400 (Sosyal) serileriyle ve yaygın E-S-G raporlama pratiğiyle uyumludur.
+            </p>
+          </div>
+
+          <div>
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              2. Sektörel İçerik Kaynakları
+            </div>
+            <p>
+              Soru içerikleri, her sektörde fiilen kullanılan tanınmış sertifikasyon ve
+              uyum standartlarına dayanır:
+            </p>
+            <ul className="list-disc pl-5 mt-2 space-y-1 text-slate-600 text-xs">
+              <li><strong>ZDHC</strong> (Zero Discharge of Hazardous Chemicals) — tekstil/boyahane</li>
+              <li><strong>LWG</strong> (Leather Working Group) — deri ve deri ürünleri</li>
+              <li><strong>AEEE Yönetmeliği & RoHS</strong> — elektrik-elektronik</li>
+              <li><strong>Yeşil Lojistik Belgesi</strong> (Ulaştırma ve Altyapı Bakanlığı) — lojistik</li>
+              <li><strong>Operation Clean Sweep (OCS)</strong>, PAGEV yürütücülüğünde — plastik</li>
+              <li><strong>Enerji Kimlik Belgesi</strong> (5627 sayılı Kanun) — hizmet & bina</li>
+            </ul>
+          </div>
+
+          <div>
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              3. Ulusal Mevzuat Uyumu
+            </div>
+            <p>
+              Sorular ve uyarı modülleri; 7552 sayılı <strong>İklim Kanunu</strong> (9 Temmuz 2025),{" "}
+              <strong>Türkiye Emisyon Ticaret Sistemi (TR-ETS)</strong> pilot uygulaması ve AB{" "}
+              <strong>Sınırda Karbon Düzenleme Mekanizması (SKDM/CBAM)</strong> ile uyumlu olacak
+              şekilde güncellenmiştir (kaynak taraması: Ağustos 2026).
+            </p>
+          </div>
+
+          <div>
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              4. Skor Hesaplama
+            </div>
+            <p>
+              Her soru 3 kademeli bir ölçekte (Hayır / Kısmen / Evet → 0 / 1 / 2) yanıtlanır.
+              Kategori skoru, o kategorideki soruların ortalamasının 100 üzerinden ifadesidir;
+              genel skor, dört kategori skorunun ortalamasıdır. Bu, gelişmiş olgunluk
+              modellerinde (örn. acatech Endüstri 4.0 Olgunluk Endeksi) kullanılan basit
+              ortalama yaklaşımının sadeleştirilmiş bir uyarlamasıdır.
+            </p>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p className="text-xs text-amber-900 leading-relaxed">
+              <strong>Sınırlılık notu:</strong> Bu araç bir öz-değerlendirme ve yönlendirme
+              aracıdır; resmi denetim, sertifikasyon veya danışmanlık hizmetinin yerine geçmez.
+              Hibe/teşvik tutarları ve mevzuat hükümleri zamanla değişebilir — başvuru öncesi
+              ilgili kurumdan güncel şartları teyit ediniz.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------
    ANA UYGULAMA
 --------------------------------------------------------------- */
 export default function App() {
@@ -138,6 +239,7 @@ export default function App() {
   const [answers, setAnswers] = useState({});
   const [firmName, setFirmName] = useState("");
   const [pdfState, setPdfState] = useState("idle"); // idle | generating | done
+  const [showMethodology, setShowMethodology] = useState(false);
 
   const sector = useMemo(() => SECTORS.find((s) => s.id === sectorId) || null, [sectorId]);
 
@@ -255,6 +357,26 @@ export default function App() {
                 className="mt-2 px-6 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-lg transition-all inline-flex items-center gap-2"
               >
                 Başla <ArrowRight size={16} />
+              </button>
+            </div>
+
+            <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-xl p-6 space-y-3">
+              <div className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
+                BİLİMSEL METODOLOJİ VE KAYNAKÇA
+              </div>
+              <div className="text-sm font-bold text-slate-900">Bu değerlendirme neye dayanıyor?</div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Bu araç; GRI Standartları, BM Sürdürülebilir Kalkınma Amaçları, AB Döngüsel
+                Ekonomi Eylem Planı ve sektörel uluslararası sertifikasyon standartlarından
+                (ZDHC, LWG, AEEE/RoHS, Yeşil Lojistik Belgesi vb.) esinlenerek, Türkiye'nin
+                güncel iklim mevzuatıyla (İklim Kanunu, TR-ETS) uyumlu şekilde Çorlu Ticaret ve
+                Sanayi Odası tarafından özgün olarak geliştirilmiştir.
+              </p>
+              <button
+                onClick={() => setShowMethodology(true)}
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg transition-colors"
+              >
+                Detaylı Metodolojiyi ve Kaynakçayı Gör
               </button>
             </div>
           </div>
@@ -476,6 +598,8 @@ export default function App() {
           </div>
         </footer>
       )}
+
+      {showMethodology && <MethodologyModal onClose={() => setShowMethodology(false)} />}
     </div>
   );
 }
