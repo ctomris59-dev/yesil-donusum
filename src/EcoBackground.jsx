@@ -69,7 +69,7 @@ const SPARKLES = Array.from({ length: 16 }).map((_, i) => ({
 
 export default function EcoBackground() {
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+    <div className="fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
       {/* Taban degrade */}
       <div
         className="absolute inset-0"
