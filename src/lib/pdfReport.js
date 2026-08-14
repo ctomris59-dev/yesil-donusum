@@ -79,6 +79,7 @@ export async function generateGreenPdfReport({
   crossSectorPrograms,
   triggeredModules,
   conditionalModules,
+  findingsByCategory = [],
 }) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   await ensureFontsLoaded(doc);
@@ -159,8 +160,8 @@ export async function generateGreenPdfReport({
   doc.text("Kategori Bazlı Sonuçlar", MARGIN, y);
   y += 6;
 
-  sector.categories.forEach((cat) => {
-    if (y > 265) {
+  sector.categories.forEach((cat, idx) => {
+    if (y > 260) {
       doc.addPage();
       y = 20;
     }
@@ -177,10 +178,36 @@ export async function generateGreenPdfReport({
     doc.roundedRect(MARGIN, y, CONTENT_W, 3, 1.5, 1.5, "F");
     doc.setFillColor(cr, cg, cb);
     doc.roundedRect(MARGIN, y, (CONTENT_W * s) / 100, 3, 1.5, 1.5, "F");
-    y += 9;
+    y += 7;
+
+    // ---- Öncelikli aksiyon bulguları (bu kategori için) ----
+    const findings = findingsByCategory[idx]?.findings || [];
+    findings.forEach((q) => {
+      const qLines = doc.splitTextToSize(q.text, CONTENT_W - 10);
+      const recLines = doc.splitTextToSize(`→ ${q.recommendation}`, CONTENT_W - 10);
+      const blockH = 4 + qLines.length * 3.6 + recLines.length * 3.6 + 3;
+      if (y + blockH > 272) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFont("DejaVuSans", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(q.answerValue === 0 ? 185 : 180, q.answerValue === 0 ? 28 : 130, q.answerValue === 0 ? 28 : 10);
+      doc.text(q.answerValue === 0 ? "[Hayır]" : "[Kısmen]", MARGIN + 3, y);
+      doc.setTextColor(51, 65, 85);
+      doc.text(qLines, MARGIN + 18, y);
+      y += qLines.length * 3.6 + 1;
+      doc.setFont("DejaVuSans", "normal");
+      doc.setFontSize(7.3);
+      doc.setTextColor(...GREEN);
+      doc.text(recLines, MARGIN + 18, y);
+      y += recLines.length * 3.6 + 3;
+    });
+
+    y += 3;
   });
 
-  y += 4;
+  y += 2;
 
   // ---- ETS/SKDM uyarısı ----
   if (triggeredModules.includes("ets_skdm_module") && conditionalModules.ets_skdm_module) {

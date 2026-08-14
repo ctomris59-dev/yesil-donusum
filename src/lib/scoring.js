@@ -85,6 +85,23 @@ export function weakCategories(sector, categoryScores, threshold = 60) {
   return sector.categories.filter((cat) => categoryScores[cat.code] < threshold);
 }
 
+/**
+ * Her kategori için, "Hayır" (0) veya "Kısmen" (1) cevaplanmış — yani somut aksiyon
+ * gerektiren — soruları, önerileriyle birlikte döndürür. "Evet" (2) cevaplanan veya
+ * tetikleyici (trigger) sorular hariç tutulur (tetikleyiciler ayrı bir uyarı modülünde gösterilir).
+ * Her kategoriden en fazla `maxPerCategory` soru döndürülür (en düşük skorlu olanlar önce).
+ */
+export function actionableFindings(sector, answers, maxPerCategory = 3) {
+  return sector.categories.map((cat) => {
+    const weak = cat.questions
+      .filter((q) => !q.trigger && typeof answers[q.id] === "number" && answers[q.id] < 2 && q.recommendation)
+      .map((q) => ({ ...q, answerValue: answers[q.id] }))
+      .sort((a, b) => a.answerValue - b.answerValue)
+      .slice(0, maxPerCategory);
+    return { category: cat, findings: weak };
+  });
+}
+
 export function relevantFinanceNotes(sector, categoryScores, threshold = 70) {
   const weakCodes = sector.categories
     .filter((cat) => categoryScores[cat.code] < threshold)
