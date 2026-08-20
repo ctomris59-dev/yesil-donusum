@@ -132,6 +132,54 @@ function Gauge({ value }) {
 }
 
 /* ---------------------------------------------------------------
+   KATEGORİ RADARI (sektöre göre değişken eksen sayısı, 0-100)
+--------------------------------------------------------------- */
+function CategoryRadar({ sector, categoryScores }) {
+  const size = 300;
+  const cx = size / 2;
+  const cy = size / 2;
+  const maxR = 100;
+  const categories = sector.categories;
+  const n = categories.length;
+
+  const pointAt = (i, r) => {
+    const angle = (-90 + (360 / n) * i) * (Math.PI / 180);
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+  };
+
+  const rings = [20, 40, 60, 80, 100];
+  const dataPoints = categories.map((cat, i) => pointAt(i, ((categoryScores[cat.code] ?? 0) / 100) * maxR));
+  const dataPath = dataPoints.map((p) => p.join(",")).join(" ");
+
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} width="100%" style={{ maxWidth: 300, display: "block", margin: "0 auto" }}>
+      {rings.map((ring) => {
+        const pts = categories.map((_, i) => pointAt(i, (ring / 100) * maxR).join(",")).join(" ");
+        return (
+          <polygon key={ring} points={pts} fill="none" stroke="#E2E8F0" strokeWidth={ring === 100 ? 1.5 : 1} strokeDasharray={ring === 100 ? "0" : "3,3"} />
+        );
+      })}
+      {categories.map((cat, i) => {
+        const [x, y] = pointAt(i, maxR);
+        return <line key={cat.code} x1={cx} y1={cy} x2={x} y2={y} stroke="#CBD5E1" strokeWidth="1" />;
+      })}
+      <polygon points={dataPath} fill="rgba(6, 95, 70, 0.15)" stroke="#065F46" strokeWidth="2.5" />
+      {dataPoints.map((p, i) => (
+        <circle key={i} cx={p[0]} cy={p[1]} r="4" fill="#065F46" stroke="#FFFFFF" strokeWidth="2" />
+      ))}
+      {categories.map((cat, i) => {
+        const [x, y] = pointAt(i, maxR + 26);
+        return (
+          <text key={cat.code} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize="10" fill="#334155" fontWeight="700">
+            {cat.label.toUpperCase()}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ---------------------------------------------------------------
    METODOLOJİ MODALI
 --------------------------------------------------------------- */
 function MethodologyModal({ onClose }) {
@@ -746,6 +794,11 @@ export default function App() {
               <p className="text-xs text-slate-700 font-medium max-w-md mx-auto leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
                 {level.recommendation}
               </p>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">Kategori Bazlı Genel Görünüm</h3>
+              <CategoryRadar sector={sector} categoryScores={categoryScores} />
             </div>
 
             <div className="space-y-3">

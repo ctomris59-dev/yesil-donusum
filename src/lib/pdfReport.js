@@ -69,6 +69,103 @@ function scoreRgb(score) {
   return [5, 150, 105];
 }
 
+/* ---------------------------------------------------------------
+   GAUGE (yarım daire, 0-100)
+--------------------------------------------------------------- */
+function drawGauge(doc, value, cx, cy, r, colorRgb) {
+  const startAngle = 180;
+  const endAngle = 360;
+  const pct = Math.max(0, Math.min(1, value / 100));
+  const needleAngle = startAngle + pct * (endAngle - startAngle);
+  const polar = (angleDeg, radius) => {
+    const rad = (angleDeg * Math.PI) / 180;
+    return [cx + radius * Math.cos(rad), cy + radius * Math.sin(rad)];
+  };
+  const steps = 40;
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(3.2);
+  for (let i = 0; i < steps; i++) {
+    const a0 = startAngle + (i / steps) * (endAngle - startAngle);
+    const a1 = startAngle + ((i + 1) / steps) * (endAngle - startAngle);
+    const [x0, y0] = polar(a0, r);
+    const [x1, y1] = polar(a1, r);
+    doc.line(x0, y0, x1, y1);
+  }
+  const filledSteps = Math.round(steps * pct);
+  doc.setDrawColor(...colorRgb);
+  for (let i = 0; i < filledSteps; i++) {
+    const a0 = startAngle + (i / steps) * (endAngle - startAngle);
+    const a1 = startAngle + ((i + 1) / steps) * (endAngle - startAngle);
+    const [x0, y0] = polar(a0, r);
+    const [x1, y1] = polar(a1, r);
+    doc.line(x0, y0, x1, y1);
+  }
+  const [nx, ny] = polar(needleAngle, r - 4);
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(1);
+  doc.line(cx, cy, nx, ny);
+  doc.setFillColor(...NAVY);
+  doc.circle(cx, cy, 1.6, "F");
+
+  doc.setFont("DejaVuSans", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(...NAVY);
+  doc.text(`${value}`, cx, cy - 10, { align: "center" });
+  doc.setFont("DejaVuSans", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(...STEEL);
+  doc.text("/ 100", cx, cy - 5, { align: "center" });
+}
+
+/* ---------------------------------------------------------------
+   RADAR (sektöre göre değişken eksen sayısı, 0-100)
+--------------------------------------------------------------- */
+function drawRadar(doc, categories, categoryScores, cx, cy, maxR) {
+  const n = categories.length;
+  const pointAt = (i, r) => {
+    const angle = (-90 + (360 / n) * i) * (Math.PI / 180);
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+  };
+
+  [20, 40, 60, 80, 100].forEach((ring) => {
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(ring === 100 ? 0.3 : 0.15);
+    const pts = categories.map((_, i) => pointAt(i, (ring / 100) * maxR));
+    for (let i = 0; i < n; i++) {
+      const [x1, y1] = pts[i];
+      const [x2, y2] = pts[(i + 1) % n];
+      doc.line(x1, y1, x2, y2);
+    }
+  });
+
+  categories.forEach((_, i) => {
+    const [x, y] = pointAt(i, maxR);
+    doc.line(cx, cy, x, y);
+  });
+
+  const dataPts = categories.map((cat, i) => pointAt(i, ((categoryScores[cat.code] ?? 0) / 100) * maxR));
+  doc.setDrawColor(...GREEN);
+  doc.setLineWidth(1);
+  for (let i = 0; i < n; i++) {
+    const [x1, y1] = dataPts[i];
+    const [x2, y2] = dataPts[(i + 1) % n];
+    doc.line(x1, y1, x2, y2);
+  }
+  dataPts.forEach(([x, y]) => {
+    doc.setFillColor(...GREEN);
+    doc.circle(x, y, 1.4, "F");
+  });
+
+  doc.setFont("DejaVuSans", "bold");
+  doc.setFontSize(6.6);
+  doc.setTextColor(...NAVY);
+  categories.forEach((cat, i) => {
+    const [x, y] = pointAt(i, maxR + 8);
+    const lines = doc.splitTextToSize(cat.label.toUpperCase(), 26);
+    doc.text(lines, x, y, { align: "center" });
+  });
+}
+
 export async function generateGreenPdfReport({
   firmName,
   sector,
@@ -121,23 +218,27 @@ export async function generateGreenPdfReport({
   }
   y += 10;
 
-  // ---- Genel skor kutusu ----
-  doc.setFillColor(...LIGHT);
-  doc.roundedRect(MARGIN, y, CONTENT_W, 30, 3, 3, "F");
-  const [r, g, b] = scoreRgb(overallScore);
-  doc.setTextColor(r, g, b);
+  // ---- Seviye başlığı ----
   doc.setFont("DejaVuSans", "bold");
-  doc.setFontSize(26);
-  doc.text(`${overallScore}/100`, MARGIN + 8, y + 20);
+  doc.setFontSize(15);
   doc.setTextColor(...NAVY);
-  doc.setFontSize(13);
-  doc.text(level.name, MARGIN + 55, y + 14);
+  doc.text(level.name, MARGIN, y + 5);
   doc.setFont("DejaVuSans", "normal");
   doc.setFontSize(8.5);
   doc.setTextColor(...STEEL);
-  const descLines = doc.splitTextToSize(level.desc, CONTENT_W - 60);
-  doc.text(descLines, MARGIN + 55, y + 21);
-  y += 38;
+  const descLines = doc.splitTextToSize(level.desc, CONTENT_W);
+  doc.text(descLines, MARGIN, y + 11);
+  y += 11 + descLines.length * 4.2 + 5;
+
+  // ---- Genel skor: Gauge + Radar ----
+  doc.setFillColor(...LIGHT);
+  doc.roundedRect(MARGIN, y, CONTENT_W, 72, 3, 3, "F");
+  const [r, g, b] = scoreRgb(overallScore);
+  drawGauge(doc, overallScore, MARGIN + 44, y + 40, 28, [r, g, b]);
+  if (sector.categories.length >= 3) {
+    drawRadar(doc, sector.categories, categoryScores, MARGIN + CONTENT_W - 54, y + 38, 27);
+  }
+  y += 80;
 
   // ---- Öneri kutusu ----
   doc.setFillColor(236, 253, 245);
