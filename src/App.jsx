@@ -20,6 +20,7 @@ import {
   actionableFindings,
 } from "./lib/scoring";
 import { generateGreenPdfReport } from "./lib/pdfReport";
+import { supabase } from "./lib/supabaseClient";
 import EcoBackground from "./components/EcoBackground";
 
 const HIBE_MOTORU_URL = "https://hibemotoru.vercel.app";
@@ -231,16 +232,103 @@ function MethodologyModal({ onClose }) {
 }
 
 /* ---------------------------------------------------------------
+   KVKK AYDINLATMA METNİ MODALI
+--------------------------------------------------------------- */
+function KVKKModal({ onClose }) {
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 z-50 bg-slate-900/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white border border-slate-200 rounded-xl shadow-2xl p-6 sm:p-8 max-w-2xl w-full"
+        style={{ maxHeight: "85vh", overflowY: "auto" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <h3 className="text-base font-extrabold text-slate-900">KVKK Aydınlatma Metni</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 flex-shrink-0">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="space-y-4 text-sm text-slate-700 leading-relaxed">
+          <div>
+            <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Veri Sorumlusu</div>
+            <p>
+              Bu değerlendirme, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında
+              Çorlu Ticaret ve Sanayi Odası ("Oda") tarafından veri sorumlusu sıfatıyla yürütülmektedir.
+            </p>
+          </div>
+          <div>
+            <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">İşlenen Veriler</div>
+            <p>
+              Değerlendirmeyi tamamlayıp sonuç raporunu görüntülemeniz için firma unvanı, yetkili
+              adı-soyadı, e-posta adresi, telefon numarası ile anket yanıtlarınız ve hesaplanan
+              sürdürülebilirlik skorlarınız işlenir.
+            </p>
+          </div>
+          <div>
+            <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">İşleme Amacı</div>
+            <p>
+              Verileriniz; yeşil dönüşüm ve sürdürülebilirlik olgunluk düzeyinizin ölçülmesi, size özel
+              sonuç raporunun sunulması ve Oda tarafından ilerleyen dönemde (öngörülen süre yaklaşık 6 ay)
+              tarafınızla iletişime geçilerek gelişim sürecinizin takip edilmesi amacıyla işlenir.
+            </p>
+          </div>
+          <div>
+            <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Hukuki Sebep</div>
+            <p>
+              KVKK md. 5/1 uyarınca açık rızanıza dayanılarak; Oda'nın üyelerine yönelik yeşil dönüşüm
+              ve sürdürülebilirlik kapasitesini geliştirme faaliyetlerinin yürütülmesi meşru amacıyla
+              işlenir.
+            </p>
+          </div>
+          <div>
+            <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Saklama ve Güvenlik</div>
+            <p>
+              Veriler, yalnızca Oda yetkilileri tarafından erişilebilen güvenli bir veritabanında
+              saklanır ve amaç için gerekli süre boyunca tutulur; üçüncü taraflarla paylaşılmaz veya
+              ticari amaçla kullanılmaz. Anket yanıtlarınızın skorlanması tarayıcınızda yapılır; yalnızca
+              iletişim bilgileriniz ve sonuç skorlarınız kayıt altına alınır.
+            </p>
+          </div>
+          <div>
+            <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Haklarınız</div>
+            <p>
+              KVKK md. 11 uyarınca verilerinize erişme, düzeltilmesini/silinmesini talep etme ve
+              rızanızı geri alma dahil haklarınızı kullanmak için Oda'ya yazılı olarak başvurabilirsiniz.
+            </p>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <p className="text-xs text-amber-900 leading-relaxed">
+              Bu metin genel bir taslaktır; yayına almadan önce Oda'nın hukuk/uyum birimince gözden
+              geçirilmesi önerilir.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------
    ANA UYGULAMA
 --------------------------------------------------------------- */
 export default function App() {
-  const [screen, setScreen] = useState("intro"); // intro | sectorPick | questions | results
+  const [screen, setScreen] = useState("intro"); // intro | sectorPick | questions | contact | results
   const [sectorId, setSectorId] = useState(null);
   const [pageIndex, setPageIndex] = useState(0); // kategori sayfası
   const [answers, setAnswers] = useState({});
   const [firmName, setFirmName] = useState("");
   const [pdfState, setPdfState] = useState("idle"); // idle | generating | done
   const [showMethodology, setShowMethodology] = useState(false);
+  const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [showKVKK, setShowKVKK] = useState(false);
+  const [contact, setContact] = useState({ companyName: "", contactName: "", email: "", phone: "" });
+  const [contactErrors, setContactErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const sector = useMemo(() => SECTORS.find((s) => s.id === sectorId) || null, [sectorId]);
 
@@ -278,7 +366,7 @@ export default function App() {
       setPageIndex((p) => p + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      setScreen("results");
+      setScreen("contact");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
@@ -298,7 +386,64 @@ export default function App() {
     setPageIndex(0);
     setFirmName("");
     setPdfState("idle");
+    setKvkkAccepted(false);
+    setContact({ companyName: "", contactName: "", email: "", phone: "" });
+    setContactErrors({});
+    setSubmitError("");
     setScreen("intro");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleContactChange(field) {
+    return (e) => {
+      setContact((prev) => ({ ...prev, [field]: e.target.value }));
+      setContactErrors((prev) => (prev[field] ? { ...prev, [field]: null } : prev));
+    };
+  }
+
+  function validateContact() {
+    const errs = {};
+    if (!contact.companyName.trim()) errs.companyName = "Firma adı zorunludur";
+    if (!contact.contactName.trim()) errs.contactName = "Ad soyad zorunludur";
+    if (!contact.email.trim()) errs.email = "E-posta zorunludur";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim())) errs.email = "Geçerli bir e-posta girin";
+    if (!contact.phone.trim()) errs.phone = "Telefon zorunludur";
+    else if (contact.phone.replace(/\D/g, "").length < 10) errs.phone = "Geçerli bir telefon girin";
+    setContactErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  async function handleContactSubmit(e) {
+    e.preventDefault();
+    if (!validateContact()) return;
+
+    setSubmitting(true);
+    setSubmitError("");
+
+    const { error } = await supabase.from("yesil_donusum_basvurular").insert({
+      company_name: contact.companyName.trim(),
+      contact_name: contact.contactName.trim(),
+      email: contact.email.trim(),
+      phone: contact.phone.trim(),
+      sector_id: sectorId,
+      sector_label: sector?.label || null,
+      overall_score: overallScore,
+      level_name: level.name,
+      category_scores: categoryScores,
+      answers,
+      kvkk_consent: true,
+    });
+
+    setSubmitting(false);
+
+    if (error) {
+      console.error("Supabase kayıt hatası:", error);
+      setSubmitError("Kaydınız gönderilirken bir sorun oluştu. Lütfen tekrar deneyin.");
+      return;
+    }
+
+    setFirmName(contact.companyName.trim());
+    setScreen("results");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -355,11 +500,32 @@ export default function App() {
               </p>
               <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
                 <ShieldCheck size={14} className="text-emerald-600" />
-                Hiçbir veri sunucuya gönderilmez veya saklanmaz — tüm hesaplama tarayıcınızda yapılır.
+                Anket yanıtlarınız tarayıcınızda hesaplanır; sonucu görüntülemek için yalnızca iletişim bilgileriniz kaydedilir.
               </div>
+
+              <label className="flex items-start gap-2.5 max-w-md mx-auto text-left cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={kvkkAccepted}
+                  onChange={(e) => setKvkkAccepted(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-emerald-700 flex-shrink-0 cursor-pointer"
+                />
+                <span className="text-xs text-slate-600 leading-snug">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); setShowKVKK(true); }}
+                    className="underline font-bold text-emerald-800 hover:text-emerald-900"
+                  >
+                    KVKK Aydınlatma Metni
+                  </button>
+                  'ni okudum, kişisel verilerimin belirtilen amaçlarla işlenmesini onaylıyorum.
+                </span>
+              </label>
+
               <button
-                onClick={() => setScreen("sectorPick")}
-                className="mt-2 px-6 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-sm rounded-lg transition-all inline-flex items-center gap-2"
+                onClick={() => kvkkAccepted && setScreen("sectorPick")}
+                disabled={!kvkkAccepted}
+                className="mt-2 px-6 py-3 bg-emerald-700 hover:bg-emerald-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-lg transition-all inline-flex items-center gap-2"
               >
                 Başla <ArrowRight size={16} />
               </button>
@@ -471,6 +637,100 @@ export default function App() {
                 {pageIndex < totalPages - 1 ? "Devam" : "Sonuçları Gör"} <ArrowRight size={14} />
               </button>
             </div>
+          </div>
+        )}
+
+        {screen === "contact" && sector && (
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-white/40 p-5 sm:p-8 space-y-5">
+            <div className="text-center space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+                <ShieldCheck size={12} /> Son Adım
+              </div>
+              <h2 className="text-lg font-extrabold text-slate-900">Sonucunuzu görmek için bilgilerinizi girin</h2>
+              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                Sürdürülebilirlik karneniz ve PDF raporunuz, aşağıdaki bilgiler kaydedildikten sonra
+                görüntülenecektir. Bu bilgiler yalnızca Çorlu TSO tarafından ilerleyen süreçte
+                gelişiminizi takip etmek amacıyla kullanılacaktır.
+              </p>
+            </div>
+
+            <form onSubmit={handleContactSubmit} className="space-y-4 max-w-md mx-auto">
+              <div>
+                <label className="text-xs font-bold text-slate-500 block mb-1.5">Firma Adı *</label>
+                <input
+                  value={contact.companyName}
+                  onChange={handleContactChange("companyName")}
+                  placeholder="Örn. ABC Tekstil San. ve Tic. A.Ş."
+                  className={`w-full px-3.5 py-2.5 text-xs bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                    contactErrors.companyName ? "border-red-400" : "border-slate-300"
+                  }`}
+                />
+                {contactErrors.companyName && <p className="text-red-600 text-[11px] mt-1">{contactErrors.companyName}</p>}
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 block mb-1.5">Ad Soyad *</label>
+                <input
+                  value={contact.contactName}
+                  onChange={handleContactChange("contactName")}
+                  placeholder="Yetkili adı soyadı"
+                  className={`w-full px-3.5 py-2.5 text-xs bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                    contactErrors.contactName ? "border-red-400" : "border-slate-300"
+                  }`}
+                />
+                {contactErrors.contactName && <p className="text-red-600 text-[11px] mt-1">{contactErrors.contactName}</p>}
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 block mb-1.5">E-posta *</label>
+                  <input
+                    type="email"
+                    value={contact.email}
+                    onChange={handleContactChange("email")}
+                    placeholder="ornek@firma.com"
+                    className={`w-full px-3.5 py-2.5 text-xs bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                      contactErrors.email ? "border-red-400" : "border-slate-300"
+                    }`}
+                  />
+                  {contactErrors.email && <p className="text-red-600 text-[11px] mt-1">{contactErrors.email}</p>}
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 block mb-1.5">Telefon *</label>
+                  <input
+                    type="tel"
+                    value={contact.phone}
+                    onChange={handleContactChange("phone")}
+                    placeholder="05XX XXX XX XX"
+                    className={`w-full px-3.5 py-2.5 text-xs bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600 ${
+                      contactErrors.phone ? "border-red-400" : "border-slate-300"
+                    }`}
+                  />
+                  {contactErrors.phone && <p className="text-red-600 text-[11px] mt-1">{contactErrors.phone}</p>}
+                </div>
+              </div>
+
+              {submitError && (
+                <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{submitError}</p>
+              )}
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setScreen("questions")}
+                  className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-lg transition-all inline-flex items-center gap-1.5"
+                >
+                  <ArrowLeft size={14} /> Geri
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-semibold text-xs rounded-lg transition-all inline-flex items-center gap-1.5"
+                >
+                  {submitting ? "Kaydediliyor…" : "Sonucumu Görüntüle"} {!submitting && <ArrowRight size={14} />}
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
@@ -605,6 +865,7 @@ export default function App() {
       )}
 
       {showMethodology && <MethodologyModal onClose={() => setShowMethodology(false)} />}
+      {showKVKK && <KVKKModal onClose={() => setShowKVKK(false)} />}
     </div>
   );
 }
